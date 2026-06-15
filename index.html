@@ -259,7 +259,7 @@ btn.onclick = async ()=>{
   try{
     const resp = DEMO_MODE ? await verificarDemo(reserva) : await enviarFluxo(reserva);
     if(resp.status === "confirmed"){
-      mostrarOk(reserva);
+      mostrarOk(reserva, resp.codigo);
     }else{
       mostrarConflito(reserva, resp.nextAvailable);
     }
@@ -296,14 +296,15 @@ async function enviarFluxo(r){
 }
 
 /* ============== FEEDBACK NA TELA ============== */
-function mostrarOk(r){
+function mostrarOk(r, codigo){
   fb.className = "feedback fb-ok show";
   fb.innerHTML = `
     <div class="fb-title">${checkSvg()} Reserva confirmada</div>
     <div class="fb-body">
       <b>${r.quarto}</b> reservado para <b>${r.nome}</b><br>
       ${fmt(r.checkin)} → ${fmt(r.checkout)}<br>
-      Aldenira e Ruy Pacheco foram notificados.
+      ${codigo ? `Código da reserva: <b>${codigo}</b><br>` : ``}
+      Ruy Pacheco foi notificado.
     </div>`;
   fb.scrollIntoView({behavior:"smooth", block:"center"});
 }
