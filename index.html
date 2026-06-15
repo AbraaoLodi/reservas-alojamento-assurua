@@ -134,30 +134,44 @@
   .demo-flag{font-size:11px;text-align:center;color:#b0a89e;margin-top:24px}
 
   /* Calendário de consulta */
-  .cal-head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 16px}
   .cal-nav{background:var(--branco);border:1.5px solid #e2ddd7;color:var(--grafite);
-    width:40px;height:40px;border-radius:12px;font-size:20px;cursor:pointer;font-family:inherit;line-height:1}
+    width:42px;height:42px;border-radius:12px;font-size:20px;cursor:pointer;font-family:inherit;line-height:1;
+    box-shadow:var(--sombra);transition:background .15s}
   .cal-nav:active{background:var(--areia)}
-  .month-label{font-weight:600;font-size:16px;text-transform:capitalize}
-  .cal-scroll{background:var(--branco);border-radius:var(--raio);box-shadow:var(--sombra);overflow-x:auto;-webkit-overflow-scrolling:touch}
-  table.cal{border-collapse:collapse;font-size:12px}
-  table.cal th,table.cal td{text-align:center;padding:0;height:34px;min-width:28px}
+  .month-label{font-weight:600;font-size:17px;text-transform:capitalize}
+  .cal-scroll{background:var(--branco);border-radius:var(--raio);box-shadow:var(--sombra);
+    overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 0}
+  table.cal{border-collapse:collapse;font-size:13px;width:100%}
+  table.cal th,table.cal td{text-align:center;padding:0}
+  table.cal td{height:46px;min-width:38px}
+  table.cal thead th{height:48px;min-width:38px}
   th.rname,td.rname{position:sticky;left:0;background:var(--branco);z-index:2;
-    min-width:64px;max-width:64px;text-align:left;padding:0 8px;font-weight:600;font-size:12px;
-    border-right:1.5px solid #eee;white-space:nowrap}
-  thead th{font-weight:500;color:#9a948c;border-bottom:1.5px solid #f0ece8}
-  thead .wd{font-size:9px;color:#bcb6ae;display:block;line-height:1;margin-top:2px}
-  td.cell{border-right:1px solid #f5f2ef;border-bottom:1px solid #f5f2ef}
-  td.ocup{background:var(--coral)}
-  td.weekend{background:#faf8f6}
-  td.ocup.weekend{background:var(--coral)}
-  .col-today{box-shadow:inset 0 0 0 2px var(--verde)}
-  .legend{display:flex;gap:18px;justify-content:center;margin-top:14px;font-size:12px;color:#8a8a8a}
-  .legend span{display:flex;align-items:center;gap:6px}
-  .legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
-  .cal-loading{text-align:center;padding:40px 0;color:#9a948c;font-size:14px}
+    min-width:72px;max-width:72px;text-align:left;padding:0 14px;font-weight:600;font-size:13px;
+    border-right:1.5px solid #f0ece8;white-space:nowrap;color:var(--grafite)}
+  thead th{font-weight:600;color:var(--grafite);border-bottom:1.5px solid #f0ece8;vertical-align:middle}
+  thead .dn{display:block;line-height:1.1}
+  thead .wd{font-size:9px;color:#bcb6ae;display:block;line-height:1;margin-top:3px;font-weight:500}
+  thead th.is-weekend .dn{color:#bcb6ae}
+  td.cell{border-right:1px solid #f7f4f1}
+  tbody tr:not(:last-child) td{border-bottom:1px solid #f7f4f1}
+  td.weekend{background:#fbf9f7}
+  /* barra de ocupação */
+  .bar{height:24px;background:var(--coral);margin:0 auto}
+  td.ocup .bar{width:100%}
+  td.ocup-start .bar{border-top-left-radius:12px;border-bottom-left-radius:12px;margin-left:3px;width:calc(100% - 3px)}
+  td.ocup-end .bar{border-top-right-radius:12px;border-bottom-right-radius:12px;margin-right:3px;width:calc(100% - 3px)}
+  td.ocup-start.ocup-end .bar{width:calc(100% - 6px);border-radius:12px}
+  /* hoje */
+  thead th.col-today .dn{background:var(--verde);color:#fff;border-radius:50%;
+    width:24px;height:24px;line-height:24px;margin:0 auto;font-size:12px}
+  td.col-today{box-shadow:inset 1px 0 0 var(--verde),inset -1px 0 0 var(--verde)}
+  .legend{display:flex;gap:20px;justify-content:center;margin-top:16px;font-size:13px;color:#8a8a8a}
+  .legend span{display:flex;align-items:center;gap:7px}
+  .legend i{width:16px;height:16px;border-radius:5px;display:inline-block}
+  .cal-loading{text-align:center;padding:48px 16px;color:#9a948c;font-size:14px}
   .refresh-btn{background:none;border:none;color:var(--coral);font-family:inherit;font-weight:600;
-    font-size:13px;cursor:pointer;margin-top:14px;display:block;margin-left:auto;margin-right:auto}
+    font-size:13px;cursor:pointer;margin-top:16px;display:block;margin-left:auto;margin-right:auto}
 </style>
 </head>
 <body>
@@ -438,27 +452,38 @@ function desenharCalendario(){
   const nDias = new Date(ano, mes+1, 0).getDate();
   const reservas = reservasCache || [];
 
+  // função: o quarto q está ocupado no dia d?
+  const ocup = (q, d)=>{
+    const dia = `${ano}-${pad(mes+1)}-${pad(d)}`;
+    return reservas.some(r=> r.quarto===q && dia >= r.checkin && dia < r.checkout);
+  };
+
   // cabeçalho dos dias
   let thead = `<tr><th class="rname"></th>`;
   for(let d=1; d<=nDias; d++){
     const dow = new Date(ano, mes, d).getDay();
+    const fds = (dow===0||dow===6);
     const isHoje = (`${ano}-${pad(mes+1)}-${pad(d)}` === hojeStr);
-    thead += `<th class="${isHoje?'col-today':''}">${d}<span class="wd">${WD[dow]}</span></th>`;
+    thead += `<th class="${isHoje?'col-today':''} ${fds?'is-weekend':''}"><span class="dn">${d}</span><span class="wd">${WD[dow]}</span></th>`;
   }
   thead += `</tr>`;
 
-  // uma linha por quarto
+  // uma linha por quarto, com barras contínuas
   let tbody = "";
   QUARTOS.forEach(q=>{
     tbody += `<tr><td class="rname">${q.id.replace("Quarto ","Qto ")}</td>`;
     for(let d=1; d<=nDias; d++){
       const dia = `${ano}-${pad(mes+1)}-${pad(d)}`;
       const dow = new Date(ano, mes, d).getDay();
-      const fimDeSemana = (dow===0||dow===6);
-      const ocupado = reservas.some(r=> r.quarto===q.id && dia >= r.checkin && dia < r.checkout);
+      const fds = (dow===0||dow===6);
       const isHoje = (dia === hojeStr);
-      const cls = ["cell", ocupado?"ocup":"", fimDeSemana?"weekend":"", isHoje?"col-today":""].join(" ").trim();
-      tbody += `<td class="${cls}"></td>`;
+      const o = ocup(q, d);
+      const inicio = o && !(d>1 && ocup(q, d-1));      // começo de um período
+      const fim     = o && !(d<nDias && ocup(q, d+1));  // fim de um período
+      const cls = ["cell",
+        o?"ocup":"", inicio?"ocup-start":"", fim?"ocup-end":"",
+        fds?"weekend":"", isHoje?"col-today":""].filter(Boolean).join(" ");
+      tbody += `<td class="${cls}">${o?'<div class="bar"></div>':''}</td>`;
     }
     tbody += `</tr>`;
   });
