@@ -1,9 +1,10 @@
 <!--
   Sistema de Reservas — Alojamento Assuruá (Serena O&M)
 
-  >>> CONFIGURAÇÃO: cole as DUAS URLs logo abaixo, no início do <script>. <<<
-  - POWER_AUTOMATE_URL  = URL do fluxo de RESERVA (grava e verifica conflito)
-  - CONSULTA_URL        = URL do fluxo de CONSULTA (só lê e devolve quarto+datas)
+  >>> CONFIGURAÇÃO: cole as TRÊS URLs logo abaixo, no início do <script>. <<<
+  - POWER_AUTOMATE_URL  = fluxo de RESERVA (grava e verifica conflito)
+  - CONSULTA_URL        = fluxo de CONSULTA (só lê e devolve quarto+datas)
+  - CANCELAMENTO_URL    = fluxo de CANCELAMENTO (marca a reserva como Cancelada)
   Deixe DEMO_MODE = false para usar os fluxos reais.
 -->
 <!DOCTYPE html>
@@ -43,7 +44,6 @@
   }
   .wrap{max-width:560px;margin:0 auto;padding:0 16px 48px}
 
-  /* Cabeçalho */
   header{
     background:var(--branco);
     padding:20px 16px 0;
@@ -60,7 +60,6 @@
   header h1{font-size:18px;font-weight:600;color:var(--grafite)}
   header p{font-size:13px;color:#8a8a8a;font-weight:400}
 
-  /* Abas */
   .tabs{max-width:560px;margin:14px auto 0;display:flex;gap:4px}
   .tab{
     flex:1;font-family:inherit;font-size:15px;font-weight:600;color:#8a8a8a;
@@ -74,7 +73,6 @@
 
   .step-label{font-size:13px;font-weight:600;color:var(--coral);text-transform:uppercase;letter-spacing:.06em;margin:24px 4px 12px}
 
-  /* Cartões de quarto */
   .rooms{display:grid;gap:12px}
   .room{
     background:var(--branco);border-radius:var(--raio);padding:16px;
@@ -91,7 +89,6 @@
   .amen{display:flex;flex-wrap:wrap;gap:6px}
   .tag{font-size:12px;background:var(--areia);color:var(--grafite);padding:3px 9px;border-radius:20px;font-weight:500}
 
-  /* Formulário */
   .card{background:var(--branco);border-radius:var(--raio);padding:18px;box-shadow:var(--sombra)}
   label{display:block;font-size:13px;font-weight:500;margin:14px 0 6px}
   label:first-child{margin-top:0}
@@ -102,7 +99,6 @@
   input:focus{outline:none;border-color:var(--coral);background:#fff}
   .dates{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
-  /* Botões */
   .btn{
     width:100%;font-family:inherit;font-size:16px;font-weight:600;
     padding:15px;border:none;border-radius:12px;cursor:pointer;margin-top:20px;
@@ -110,9 +106,10 @@
   }
   .btn-primary{background:var(--coral);color:#fff}
   .btn-primary:active{background:var(--coral-dark)}
+  .btn-danger{background:none;color:var(--coral);border:1.5px solid var(--coral)}
+  .btn-danger:active{background:rgba(255,82,70,.08)}
   .btn:disabled{opacity:.45;cursor:not-allowed}
 
-  /* Feedback */
   .feedback{margin-top:18px;border-radius:var(--raio);padding:18px;display:none}
   .feedback.show{display:block;animation:pop .25s ease}
   @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -134,7 +131,16 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   .demo-flag{font-size:11px;text-align:center;color:#b0a89e;margin-top:24px}
 
-  /* ===== Consulta (lista) ===== */
+  /* link e painel de cancelamento */
+  .link-cancelar{display:block;margin:22px auto 0;background:none;border:none;
+    color:#9a948c;font-family:inherit;font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .link-cancelar:active{color:var(--coral)}
+  #painelCancelar{margin-top:14px;display:none}
+  #painelCancelar.show{display:block;animation:pop .25s ease}
+  .painel-title{font-weight:600;font-size:15px;margin-bottom:4px}
+  .painel-sub{font-size:12.5px;color:#9a948c;margin-bottom:6px}
+
+  /* Consulta (lista) */
   .sec-title{font-size:13px;font-weight:600;color:var(--coral);text-transform:uppercase;letter-spacing:.06em;margin:6px 4px 10px}
   .sec-title:not(:first-child){margin-top:24px}
   .st-card,.pr-card{padding:4px 18px}
@@ -202,6 +208,20 @@
     </div>
 
     <div class="feedback" id="feedback"></div>
+
+    <!-- link discreto de cancelamento -->
+    <button class="link-cancelar" id="abrirCancelar">Cancelar uma reserva</button>
+
+    <div class="card" id="painelCancelar">
+      <div class="painel-title">Cancelar reserva</div>
+      <div class="painel-sub">Informe o código da reserva e o telefone usado no cadastro.</div>
+      <label for="cCodigo">Código da reserva</label>
+      <input type="text" id="cCodigo" placeholder="ASR0001" autocomplete="off">
+      <label for="cFone">Telefone</label>
+      <input type="tel" id="cFone" placeholder="(74) 9 9999-9999" autocomplete="tel">
+      <button class="btn btn-danger" id="btnCancelar">Cancelar reserva</button>
+      <div class="feedback" id="fbCancelar"></div>
+    </div>
   </div>
 
   <!-- ============ ABA CONSULTAR ============ -->
@@ -217,10 +237,11 @@
 
 <script>
 /* ============================================================
-   CONFIGURAÇÃO  — cole as DUAS URLs aqui
+   CONFIGURAÇÃO  — cole as TRÊS URLs aqui
    ============================================================ */
 const POWER_AUTOMATE_URL = "https://default898e407823d6433c94aa51bf928dca.9d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5e0250831e7340499566242744e11bcd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=y2Dz9-Ss7zWcZ6aacFQZzscf8FuAQve1ypbtSyciiF4";
 const CONSULTA_URL       = "https://default898e407823d6433c94aa51bf928dca.9d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/cb014cd47996476293f3aadab33e4929/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=u-KA5SjkrkQsltqjA4FURId_mPss-5P6Lm-FZe-YPLI";
+const CANCELAMENTO_URL   = "https://default898e407823d6433c94aa51bf928dca.9d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/377410b2baf3494ca288f2e9a0358a72/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9FblJ_8_dHpRkmimG68m3634-gT4E-2pJz-SHvNry4g";
 const DEMO_MODE = false;   // true = funciona sozinho p/ demonstração | false = usa os fluxos
 
 /* ============== DADOS DOS QUARTOS ============== */
@@ -232,7 +253,6 @@ const QUARTOS = [
   {id:"Quarto 05", amen:["Banheiro","Cama de casal","Guarda-roupa","TV"]},
 ];
 
-/* Reservas de exemplo (só no modo demo) */
 const RESERVAS_DEMO = [
   {quarto:"Quarto 01", checkin:"2026-06-20", checkout:"2026-06-25", nome:"João Silva"},
   {quarto:"Quarto 03", checkin:"2026-06-16", checkout:"2026-06-19", nome:"Maria Souza"},
@@ -240,6 +260,7 @@ const RESERVAS_DEMO = [
 
 /* ============== ESTADO ============== */
 let quartoSel = null;
+let reservasCache = null;
 
 /* ============== ABAS ============== */
 const tabReservar = document.getElementById("tabReservar");
@@ -276,7 +297,6 @@ QUARTOS.forEach(q=>{
   roomsEl.appendChild(div);
 });
 
-/* data mínima = hoje */
 const hojeStr = new Date().toISOString().split("T")[0];
 document.getElementById("checkin").min = hojeStr;
 document.getElementById("checkout").min = hojeStr;
@@ -295,6 +315,7 @@ function proximaLivre(reservasQuarto, de){
 }
 function fmt(d){ const [a,m,dia]=d.split("-"); return `${dia}/${m}/${a}`; }
 function pad(n){ return String(n).padStart(2,"0"); }
+function soDigitos(s){ return (s||"").replace(/\D/g,""); }
 
 /* ============== ENVIO DA RESERVA ============== */
 const btn = document.getElementById("submit");
@@ -322,7 +343,7 @@ btn.onclick = async ()=>{
     const resp = DEMO_MODE ? await verificarDemo(reserva) : await enviarFluxo(reserva);
     if(resp.status === "confirmed"){
       mostrarOk(reserva, resp.codigo);
-      reservasCache = null;   // força recarregar a consulta na próxima vez
+      reservasCache = null;
     }else{
       mostrarConflito(reserva, resp.nextAvailable);
     }
@@ -347,9 +368,7 @@ async function verificarDemo(r){
 
 async function enviarFluxo(r){
   const resp = await fetch(POWER_AUTOMATE_URL,{
-    method:"POST",
-    headers:{"Content-Type":"text/plain"},
-    body:JSON.stringify(r)
+    method:"POST", headers:{"Content-Type":"text/plain"}, body:JSON.stringify(r)
   });
   return await resp.json();
 }
@@ -389,10 +408,68 @@ function checkSvg(){return `<svg class="icon" viewBox="0 0 24 24" fill="none" st
 function xSvg(){return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#E03e33" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>`;}
 
 /* ============================================================
+   CANCELAMENTO
+   ============================================================ */
+const abrirCancelar = document.getElementById("abrirCancelar");
+const painelCancelar = document.getElementById("painelCancelar");
+const btnCancelar = document.getElementById("btnCancelar");
+const fbCancelar = document.getElementById("fbCancelar");
+
+abrirCancelar.onclick = ()=>{
+  painelCancelar.classList.toggle("show");
+  if(painelCancelar.classList.contains("show")){
+    painelCancelar.scrollIntoView({behavior:"smooth", block:"center"});
+  }
+};
+
+btnCancelar.onclick = async ()=>{
+  const codigo = document.getElementById("cCodigo").value.trim().toUpperCase();
+  const fone   = document.getElementById("cFone").value.trim();
+
+  fbCancelar.className = "feedback";
+  if(!codigo) return cancelErro("Informe o código", "Digite o código da reserva (ex.: ASR0001).");
+  if(!fone)   return cancelErro("Informe o telefone", "Digite o telefone usado na reserva.");
+
+  btnCancelar.disabled = true;
+  btnCancelar.innerHTML = `<span class="spinner spinner-coral"></span>Cancelando…`;
+
+  try{
+    const resp = DEMO_MODE ? await cancelarDemo(codigo, fone) : await cancelarFluxo(codigo, fone);
+    if(resp.status === "cancelled"){
+      fbCancelar.className = "feedback fb-ok show";
+      fbCancelar.innerHTML = `<div class="fb-title">${checkSvg()} Reserva cancelada</div>
+        <div class="fb-body">A reserva <b>${codigo}</b> foi cancelada e o quarto liberado.</div>`;
+      reservasCache = null;   // a consulta recarrega atualizada
+    }else{
+      cancelErro("Não encontramos a reserva", "Confira o código e use o mesmo telefone do cadastro.");
+    }
+  }catch(e){
+    cancelErro("Falha de conexão", "Não foi possível concluir agora. Tente novamente.");
+  }finally{
+    btnCancelar.disabled = false;
+    btnCancelar.textContent = "Cancelar reserva";
+  }
+};
+
+function cancelErro(titulo, msg){
+  fbCancelar.className = "feedback fb-err show";
+  fbCancelar.innerHTML = `<div class="fb-title">${xSvg()} ${titulo}</div><div class="fb-body">${msg}</div>`;
+}
+
+async function cancelarFluxo(codigo, telefone){
+  const resp = await fetch(CANCELAMENTO_URL,{
+    method:"POST", headers:{"Content-Type":"text/plain"}, body:JSON.stringify({codigo, telefone})
+  });
+  return await resp.json();
+}
+async function cancelarDemo(codigo, telefone){
+  await new Promise(r=>setTimeout(r,600));
+  return {status:"cancelled"};   // só para demonstração visual
+}
+
+/* ============================================================
    CONSULTA  (status de hoje + próximas reservas)
    ============================================================ */
-let reservasCache = null;
-
 document.getElementById("refreshCal").onclick = ()=>{ reservasCache = null; carregarConsulta(); };
 
 async function carregarConsulta(){
@@ -418,7 +495,6 @@ function renderConsulta(){
   const reservas = reservasCache || [];
   const hoje = hojeStr;
 
-  // ----- Situação hoje -----
   let status = "";
   QUARTOS.forEach(q=>{
     const doQuarto = reservas.filter(r=> r.quarto===q.id);
@@ -447,7 +523,6 @@ function renderConsulta(){
     }
   });
 
-  // ----- Próximas reservas (ativas ou futuras) -----
   const futuras = reservas
     .filter(r=> r.checkout > hoje)
     .sort((a,b)=> a.checkin < b.checkin ? -1 : (a.checkin > b.checkin ? 1 : 0));
