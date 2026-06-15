@@ -2,8 +2,8 @@
   Sistema de Reservas — Alojamento Assuruá (Serena O&M)
 
   >>> CONFIGURAÇÃO: cole as DUAS URLs logo abaixo, no início do <script>. <<<
-  - POWER_AUTOMATE_URL  = URL do fluxo de RESERVA (o que grava e verifica conflito)
-  - CONSULTA_URL        = URL do fluxo de CONSULTA (o que só lê e devolve quarto+datas)
+  - POWER_AUTOMATE_URL  = URL do fluxo de RESERVA (grava e verifica conflito)
+  - CONSULTA_URL        = URL do fluxo de CONSULTA (só lê e devolve quarto+datas)
   Deixe DEMO_MODE = false para usar os fluxos reais.
 -->
 <!DOCTYPE html>
@@ -13,8 +13,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#FF5246">
 <title>Reservas · Alojamento</title>
+<link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -70,7 +72,6 @@
   .view{display:none}
   .view.active{display:block}
 
-  /* Passos */
   .step-label{font-size:13px;font-weight:600;color:var(--coral);text-transform:uppercase;letter-spacing:.06em;margin:24px 4px 12px}
 
   /* Cartões de quarto */
@@ -133,45 +134,29 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   .demo-flag{font-size:11px;text-align:center;color:#b0a89e;margin-top:24px}
 
-  /* Calendário de consulta */
-  .cal-head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 16px}
-  .cal-nav{background:var(--branco);border:1.5px solid #e2ddd7;color:var(--grafite);
-    width:42px;height:42px;border-radius:12px;font-size:20px;cursor:pointer;font-family:inherit;line-height:1;
-    box-shadow:var(--sombra);transition:background .15s}
-  .cal-nav:active{background:var(--areia)}
-  .month-label{font-weight:600;font-size:17px;text-transform:capitalize}
-  .cal-scroll{background:var(--branco);border-radius:var(--raio);box-shadow:var(--sombra);
-    overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 0}
-  table.cal{border-collapse:collapse;font-size:13px;width:100%}
-  table.cal th,table.cal td{text-align:center;padding:0}
-  table.cal td{height:46px;min-width:38px}
-  table.cal thead th{height:48px;min-width:38px}
-  th.rname,td.rname{position:sticky;left:0;background:var(--branco);z-index:2;
-    min-width:72px;max-width:72px;text-align:left;padding:0 14px;font-weight:600;font-size:13px;
-    border-right:1.5px solid #f0ece8;white-space:nowrap;color:var(--grafite)}
-  thead th{font-weight:600;color:var(--grafite);border-bottom:1.5px solid #f0ece8;vertical-align:middle}
-  thead .dn{display:block;line-height:1.1}
-  thead .wd{font-size:9px;color:#bcb6ae;display:block;line-height:1;margin-top:3px;font-weight:500}
-  thead th.is-weekend .dn{color:#bcb6ae}
-  td.cell{border-right:1px solid #f7f4f1}
-  tbody tr:not(:last-child) td{border-bottom:1px solid #f7f4f1}
-  td.weekend{background:#fbf9f7}
-  /* barra de ocupação */
-  .bar{height:24px;background:var(--coral);margin:0 auto}
-  td.ocup .bar{width:100%}
-  td.ocup-start .bar{border-top-left-radius:12px;border-bottom-left-radius:12px;margin-left:3px;width:calc(100% - 3px)}
-  td.ocup-end .bar{border-top-right-radius:12px;border-bottom-right-radius:12px;margin-right:3px;width:calc(100% - 3px)}
-  td.ocup-start.ocup-end .bar{width:calc(100% - 6px);border-radius:12px}
-  /* hoje */
-  thead th.col-today .dn{background:var(--verde);color:#fff;border-radius:50%;
-    width:24px;height:24px;line-height:24px;margin:0 auto;font-size:12px}
-  td.col-today{box-shadow:inset 1px 0 0 var(--verde),inset -1px 0 0 var(--verde)}
-  .legend{display:flex;gap:20px;justify-content:center;margin-top:16px;font-size:13px;color:#8a8a8a}
-  .legend span{display:flex;align-items:center;gap:7px}
-  .legend i{width:16px;height:16px;border-radius:5px;display:inline-block}
-  .cal-loading{text-align:center;padding:48px 16px;color:#9a948c;font-size:14px}
+  /* ===== Consulta (lista) ===== */
+  .sec-title{font-size:13px;font-weight:600;color:var(--coral);text-transform:uppercase;letter-spacing:.06em;margin:6px 4px 10px}
+  .sec-title:not(:first-child){margin-top:24px}
+  .st-card,.pr-card{padding:4px 18px}
+  .st-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid #f0ece8}
+  .st-row:last-child{border-bottom:none}
+  .st-name{font-weight:600;font-size:15px}
+  .st-info{font-size:12.5px;color:#9a948c;margin-top:2px}
+  .badge{font-size:12px;font-weight:600;padding:5px 13px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+  .badge-livre{background:rgba(50,202,160,.16);color:var(--verde-dark)}
+  .badge-ocup{background:rgba(255,82,70,.14);color:var(--coral-dark)}
+  .pr-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #f0ece8}
+  .pr-row:last-child{border-bottom:none}
+  .pr-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+  .dot-ocup{background:var(--coral)}
+  .dot-fut{background:#d8d2cb}
+  .pr-room{font-weight:600;font-size:14px;min-width:82px}
+  .pr-dates{font-size:13px;color:#6f6a64;margin-left:auto}
+  .empty{padding:26px 0;text-align:center;color:#9a948c;font-size:14px}
+  .cal-loading{text-align:center;padding:48px 16px;color:#9a948c;font-size:14px;
+    background:var(--branco);border-radius:var(--raio);box-shadow:var(--sombra)}
   .refresh-btn{background:none;border:none;color:var(--coral);font-family:inherit;font-weight:600;
-    font-size:13px;cursor:pointer;margin-top:16px;display:block;margin-left:auto;margin-right:auto}
+    font-size:13px;cursor:pointer;margin-top:18px;display:block;margin-left:auto;margin-right:auto}
 </style>
 </head>
 <body>
@@ -221,17 +206,8 @@
 
   <!-- ============ ABA CONSULTAR ============ -->
   <div class="view" id="viewConsultar">
-    <div class="cal-head">
-      <button class="cal-nav" id="prevM">‹</button>
-      <span class="month-label" id="monthLabel">—</span>
-      <button class="cal-nav" id="nextM">›</button>
-    </div>
-    <div class="cal-scroll" id="calScroll">
+    <div id="consultaBody">
       <div class="cal-loading">Carregando ocupação…</div>
-    </div>
-    <div class="legend">
-      <span><i style="background:#f5f2ef;border:1px solid #e2ddd7"></i> Livre</span>
-      <span><i style="background:var(--coral)"></i> Ocupado</span>
     </div>
     <button class="refresh-btn" id="refreshCal">↻ Atualizar</button>
   </div>
@@ -278,7 +254,7 @@ tabReservar.onclick = ()=>{
 tabConsultar.onclick = ()=>{
   tabConsultar.classList.add("active"); tabReservar.classList.remove("active");
   viewConsultar.classList.add("active"); viewReservar.classList.remove("active");
-  carregarConsulta();   // carrega a ocupação ao abrir a aba
+  carregarConsulta();
 };
 
 /* ============== MONTAGEM DOS QUARTOS ============== */
@@ -346,6 +322,7 @@ btn.onclick = async ()=>{
     const resp = DEMO_MODE ? await verificarDemo(reserva) : await enviarFluxo(reserva);
     if(resp.status === "confirmed"){
       mostrarOk(reserva, resp.codigo);
+      reservasCache = null;   // força recarregar a consulta na próxima vez
     }else{
       mostrarConflito(reserva, resp.nextAvailable);
     }
@@ -412,83 +389,88 @@ function checkSvg(){return `<svg class="icon" viewBox="0 0 24 24" fill="none" st
 function xSvg(){return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#E03e33" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>`;}
 
 /* ============================================================
-   CONSULTA / CALENDÁRIO
+   CONSULTA  (status de hoje + próximas reservas)
    ============================================================ */
-let reservasCache = null;          // guarda as reservas lidas do fluxo de consulta
-let calRef = new Date();           // mês exibido
-calRef.setDate(1);
+let reservasCache = null;
 
-const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
-const WD = ["D","S","T","Q","Q","S","S"];
-
-document.getElementById("prevM").onclick = ()=>{ calRef.setMonth(calRef.getMonth()-1); desenharCalendario(); };
-document.getElementById("nextM").onclick = ()=>{ calRef.setMonth(calRef.getMonth()+1); desenharCalendario(); };
 document.getElementById("refreshCal").onclick = ()=>{ reservasCache = null; carregarConsulta(); };
 
 async function carregarConsulta(){
-  const scroll = document.getElementById("calScroll");
-  if(reservasCache){ desenharCalendario(); return; }   // já tem em cache
-  scroll.innerHTML = `<div class="cal-loading"><span class="spinner spinner-coral"></span>Carregando ocupação…</div>`;
+  const body = document.getElementById("consultaBody");
+  if(reservasCache){ renderConsulta(); return; }
+  body.innerHTML = `<div class="cal-loading"><span class="spinner spinner-coral"></span>Carregando ocupação…</div>`;
   try{
     if(DEMO_MODE){
-      await new Promise(r=>setTimeout(r,500));
+      await new Promise(r=>setTimeout(r,400));
       reservasCache = RESERVAS_DEMO.map(r=>({quarto:r.quarto, checkin:r.checkin, checkout:r.checkout}));
     }else{
       const resp = await fetch(CONSULTA_URL,{ method:"POST", headers:{"Content-Type":"text/plain"}, body:"{}" });
       reservasCache = await resp.json();
     }
-    desenharCalendario();
+    renderConsulta();
   }catch(e){
-    scroll.innerHTML = `<div class="cal-loading">Não foi possível carregar a ocupação.<br>Toque em ↻ Atualizar para tentar de novo.</div>`;
+    body.innerHTML = `<div class="cal-loading">Não foi possível carregar a ocupação.<br>Toque em ↻ Atualizar para tentar de novo.</div>`;
   }
 }
 
-function desenharCalendario(){
-  const scroll = document.getElementById("calScroll");
-  const ano = calRef.getFullYear();
-  const mes = calRef.getMonth();                 // 0-11
-  document.getElementById("monthLabel").textContent = `${MESES[mes]} ${ano}`;
-
-  const nDias = new Date(ano, mes+1, 0).getDate();
+function renderConsulta(){
+  const body = document.getElementById("consultaBody");
   const reservas = reservasCache || [];
+  const hoje = hojeStr;
 
-  // função: o quarto q está ocupado no dia d?
-  const ocup = (q, d)=>{
-    const dia = `${ano}-${pad(mes+1)}-${pad(d)}`;
-    return reservas.some(r=> r.quarto===q && dia >= r.checkin && dia < r.checkout);
-  };
-
-  // cabeçalho dos dias
-  let thead = `<tr><th class="rname"></th>`;
-  for(let d=1; d<=nDias; d++){
-    const dow = new Date(ano, mes, d).getDay();
-    const fds = (dow===0||dow===6);
-    const isHoje = (`${ano}-${pad(mes+1)}-${pad(d)}` === hojeStr);
-    thead += `<th class="${isHoje?'col-today':''} ${fds?'is-weekend':''}"><span class="dn">${d}</span><span class="wd">${WD[dow]}</span></th>`;
-  }
-  thead += `</tr>`;
-
-  // uma linha por quarto, com barras contínuas
-  let tbody = "";
+  // ----- Situação hoje -----
+  let status = "";
   QUARTOS.forEach(q=>{
-    tbody += `<tr><td class="rname">${q.id.replace("Quarto ","Qto ")}</td>`;
-    for(let d=1; d<=nDias; d++){
-      const dia = `${ano}-${pad(mes+1)}-${pad(d)}`;
-      const dow = new Date(ano, mes, d).getDay();
-      const fds = (dow===0||dow===6);
-      const isHoje = (dia === hojeStr);
-      const o = ocup(q, d);
-      const inicio = o && !(d>1 && ocup(q, d-1));      // começo de um período
-      const fim     = o && !(d<nDias && ocup(q, d+1));  // fim de um período
-      const cls = ["cell",
-        o?"ocup":"", inicio?"ocup-start":"", fim?"ocup-end":"",
-        fds?"weekend":"", isHoje?"col-today":""].filter(Boolean).join(" ");
-      tbody += `<td class="${cls}">${o?'<div class="bar"></div>':''}</td>`;
+    const doQuarto = reservas.filter(r=> r.quarto===q.id);
+    const atual = doQuarto.find(r=> hoje >= r.checkin && hoje < r.checkout);
+    if(atual){
+      const vaga = proximaLivre(doQuarto, hoje);
+      status += `
+        <div class="st-row">
+          <div>
+            <div class="st-name">${q.id}</div>
+            <div class="st-info">ocupado até ${fmt(atual.checkout)} · vaga em ${fmt(vaga)}</div>
+          </div>
+          <span class="badge badge-ocup">Ocupado</span>
+        </div>`;
+    }else{
+      const futuras = doQuarto.filter(r=> r.checkin > hoje).sort((a,b)=> a.checkin < b.checkin ? -1 : 1);
+      const info = futuras.length ? `livre · próxima reserva em ${fmt(futuras[0].checkin)}` : `livre`;
+      status += `
+        <div class="st-row">
+          <div>
+            <div class="st-name">${q.id}</div>
+            <div class="st-info">${info}</div>
+          </div>
+          <span class="badge badge-livre">Livre</span>
+        </div>`;
     }
-    tbody += `</tr>`;
   });
 
-  scroll.innerHTML = `<table class="cal"><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
+  // ----- Próximas reservas (ativas ou futuras) -----
+  const futuras = reservas
+    .filter(r=> r.checkout > hoje)
+    .sort((a,b)=> a.checkin < b.checkin ? -1 : (a.checkin > b.checkin ? 1 : 0));
+  let prox = "";
+  if(futuras.length === 0){
+    prox = `<div class="empty">Nenhuma reserva ativa ou futura.</div>`;
+  }else{
+    futuras.forEach(r=>{
+      const ativa = (hoje >= r.checkin && hoje < r.checkout);
+      prox += `
+        <div class="pr-row">
+          <span class="pr-dot ${ativa?'dot-ocup':'dot-fut'}"></span>
+          <span class="pr-room">${r.quarto}</span>
+          <span class="pr-dates">${fmt(r.checkin)} → ${fmt(r.checkout)}</span>
+        </div>`;
+    });
+  }
+
+  body.innerHTML = `
+    <div class="sec-title">Situação hoje</div>
+    <div class="card st-card">${status}</div>
+    <div class="sec-title">Próximas reservas</div>
+    <div class="card pr-card">${prox}</div>`;
 }
 
 document.getElementById("demoFlag").textContent =
